@@ -1,11 +1,11 @@
 import asyncio
 import os
-from aiogram import Router, types
+from aiogram import Router, types, F
 from aiogram.filters import Command
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
-from keyboards import reply
+from keyboards import reply, inline
 TOKEN = os.getenv('TOKEN')
 
 if not TOKEN:
@@ -24,6 +24,21 @@ async def cmd_start(message: types.Message):
             reply_markup=reply.start_kb        
             )
 
+@router.message(F.text.lower() == "кнопки")
+async def cmd(message: types.Message):
+    await message.answer("Нажми кнопку", reply_markup=inline.start_keyboard)
+
+@router.callback_query(F.data == "button1")
+async def process_callback(callback_query: types.CallbackQuery):
+    print("1")
+    await callback_query.message.answer("Вы нажали на кнопку 1")
+    await callback_query.answer()
+
+@router.callback_query(F.data == "button2")
+async def process_callback(callback_query: types.CallbackQuery):
+    print("2")
+    await callback_query.message.answer("Вы нажали на кнопку 2")
+    await callback_query.answer()
 
 # # Обработчик текстовых сообщений
 # @router.message()
