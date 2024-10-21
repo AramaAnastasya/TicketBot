@@ -20,8 +20,9 @@ bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 
 dp.include_router(router)
-dp.include_router(knowledge_base_router)
 dp.include_router(ollama_router)
+dp.include_router(knowledge_base_router)
+
 ALLOWED_UPDATES = ['message', 'edited_message']
 
 async def main():

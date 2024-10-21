@@ -5,6 +5,7 @@ import logging
 from aiogram import Bot, Dispatcher, Router, F, types
 from aiogram.types import Message
 from aiogram.client.bot import DefaultBotProperties
+from aiogram.fsm.state import StatesGroup, State, default_state
 from aiogram.enums import ParseMode
 from keyboards import reply
 from aiogram.fsm.context import FSMContext
@@ -27,8 +28,9 @@ bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 
 @knowledge_base_router.message(F.text.lower() == "ответ по базе знаний")
-async def menu_cmd(message: types.Message):
+async def menu_cmd(message: types.Message, state:FSMAdmin):
     await message.answer("Задайте мне вопрос, и я найду релевантные документы.", reply_markup=reply.start_kb)
+    await state.set_state(FSMAdmin.input)
 
 # База знаний
 knowledge_base = {
@@ -55,7 +57,7 @@ knowledge_base = {
 
 
 # Обработка текстовых сообщений
-@knowledge_base_router.message(lambda message: FSMAdmin.input)
+@knowledge_base_router.message(FSMAdmin.input)
 async def process_message(message: Message, state: FSMContext):
     user_query = message.text.lower()
     keywords = [word for word in user_query.split() if word not in stop_words]
