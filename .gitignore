@@ -1,3 +1,4 @@
+ollama/
 **/__pycache__/*
 env/
 .env
