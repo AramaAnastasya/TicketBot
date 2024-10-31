@@ -2,7 +2,7 @@ import os
 import json
 import logging
 # Для ембеддинга и модели
-from KeywordFinder.handlers.llm import LLM
+from key_words_finder.handlers.llm import LLM
 
 from aiogram import Bot, Dispatcher, Router, F, types
 from aiogram.types import Message
@@ -11,7 +11,7 @@ from aiogram.fsm.state import StatesGroup, State, default_state
 from aiogram.enums import ParseMode
 from keyboards import reply
 from aiogram.fsm.context import FSMContext
-from KeywordFinder.utils.states import FSMAdmin
+from key_words_finder.utils.states import FSMAdmin
 
 import pandas as pd # если нет импорта пандаса, то остальной код не имеет смысла
 from pandas import DataFrame

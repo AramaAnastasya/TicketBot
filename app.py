@@ -5,8 +5,7 @@ from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from dotenv import load_dotenv, find_dotenv
 
-from KeywordFinder.handlers.keyWordFindler import knowledge_base_router
-from UserPromptResponse.handlers.userHandlers import ollama_router
+from key_words_finder.handlers.key_word_findler import knowledge_base_router
 from handlers.basic_handlers import router
 
 load_dotenv(find_dotenv())
@@ -20,7 +19,6 @@ bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 
 dp.include_router(router)
-dp.include_router(ollama_router)
 dp.include_router(knowledge_base_router)
 
 ALLOWED_UPDATES = ['message', 'edited_message']
