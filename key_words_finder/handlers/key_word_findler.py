@@ -108,11 +108,6 @@ db = VectorStore(embedding_model=model.get_embeding_model())
 db.add(df)
 
 
-@knowledge_base_router.message(F.text.lower() == "ответ по базе знаний")
-async def menu_cmd(message: types.Message, state:FSMAdmin):
-    await message.answer("Задайте мне вопрос, и я найду релевантные документы.", reply_markup=reply.start_kb)
-    await state.set_state(FSMAdmin.input)
-
 @knowledge_base_router.message(FSMAdmin.input)
 async def process_message(message: types.Message, state: FSMContext):
     query = message.text

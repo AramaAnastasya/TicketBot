@@ -6,6 +6,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from keyboards import reply, inline
+from key_words_finder.utils.states import FSMAdmin
 TOKEN = os.getenv('TOKEN')
 
 if not TOKEN:
@@ -14,15 +15,16 @@ if not TOKEN:
 router = Router()
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
+
+
 # Обработчик команды /start
 @router.message(Command("start"))
-async def cmd_start(message: types.Message):
+async def cmd_start(message: types.Message, state:FSMAdmin):
     chat_member = await bot.get_chat_member(message.chat.id, message.from_user.id)
     # Вывести имя пользователя
     await bot.send_message(message.chat.id, 
-            f"Добрый день, <b>{chat_member.user.first_name}</b>! Я виртуальный помощник для ответов на ваши вопросы.\nЧто ваша проблема?",
-            reply_markup=reply.start_kb        
-            )
+            f"Добрый день, <b>{chat_member.user.first_name}</b>! Я виртуальный помощник для ответов на ваши вопросы.\nВ чем заключается ваша проблема?")
+    await state.set_state(FSMAdmin.input)
 
 @router.message(F.text.lower() == "кнопки")
 async def cmd(message: types.Message):
