@@ -37,17 +37,3 @@ class LLM():
     def send(self, json, path):
         """ Метод отправки данных в модель """
         return requests.post(f"http://{self.host}:{self.port}/api/{path}", json=json)
-
-
-    # model = LLM(model="llama3.2:3b", host="127.0.0.1", port=11434)
-    
-    # generate_ans = model.generate("Hello")
-    # print(f"{generate_ans}\n")
-
-    # messages = [{"role": "user", "content": "Remember a 25"}, {"role": "user", "content": "What is number you remember?"}]
-    # chat_ans = model.chat(messages)
-    # print(f"{chat_ans}\n")
-    
-    # embed_ans = model.embed("Hello")
-    # print(f"Hello -> {embed_ans}\n")
-    

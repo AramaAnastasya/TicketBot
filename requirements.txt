@@ -5,5 +5,9 @@
 # pip install langchain_ollama
 # pip install aiogram pandas langchain faiss-cpu
 # pip install -U langchain-community
+# pip install pytesseract    для обработки фото
+# pip install Pillow   для обработки фото
+# С гитхаба скачать rus.traineddata и закинуть в C:\Program Files\Tesseract-OCR\tessdata чтобы он обрабатывал изображение в текст на русском языке.
 
 #Для корректной работы необходима версия Python 3.9, aiogram 3.13
+

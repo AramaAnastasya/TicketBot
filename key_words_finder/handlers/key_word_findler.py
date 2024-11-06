@@ -20,10 +20,21 @@ from langchain_community.document_loaders import DataFrameLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 
+import pytesseract
+
+from PIL import Image
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Убедитесь, что путь корректный
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+
+
+
 TOKEN = os.getenv('TOKEN')
 bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 knowledge_base_router = Router()
+
 
 # пример документов
 documents1 = [
@@ -106,19 +117,40 @@ db.add(df)
 
 @knowledge_base_router.message(FSMAdmin.input)
 async def process_message(message: types.Message, state: FSMContext):
-    query = message.text
-    results = db.store.similarity_search_with_score(query, k=1)  # Поиск наиболее релевантного вопроса
-    print("Search results:", results)
-    
+    if message.content_type == 'photo':
+        # Если сообщение содержит изображение, получаем фото с наибольшим разрешением
+        photo = message.photo[-1]
+        
+        # Получаем объект файла
+        file = await bot.get_file(photo.file_id)
+        
+        # Определяем путь для сохранения фото
+        photo_path = f"{file.file_id}.jpg"
+        
+        # Скачиваем файл в локальную систему
+        await bot.download_file(file.file_path, destination=photo_path)
+        
+        # Открываем изображение и извлекаем текст
+        img = Image.open(photo_path)
+        text = pytesseract.image_to_string(img, lang='rus')
+        
+
+        if not text.strip():  # Проверка на пустой текст
+            await message.reply("На фото плохо видно текст")
+            return 
+        
+
+        query = text
+        await message.reply(query)
+    else:
+        # Если это текстовое сообщение
+        query = message.text
+
+    # Далее ваш существующий код для поиска по базе данных
+    results = db.store.similarity_search_with_score(query, k=1)
     if results:
         best_match = results[0]
-        print("Best match:", best_match)
-        document_id = best_match[0].metadata['id']  # Получаем ID из метаданных
-        print("ID best match:", document_id)
-        
-        # Отладочная информация для проверки, какие документы у нас есть
-        print("Documents in memory:", documents1)
-
+        document_id = best_match[0].metadata['id']
         answer = next((doc['answer'] for doc in documents1 if doc['id'] == document_id), None)
         if answer is not None:
             await message.answer(answer)
@@ -126,3 +158,4 @@ async def process_message(message: types.Message, state: FSMContext):
             await message.answer("Извините, я не смог найти ответ на ваш вопрос.")
     else:
         await message.answer("Извините, я не смог найти ответ на ваш вопрос.")
+
