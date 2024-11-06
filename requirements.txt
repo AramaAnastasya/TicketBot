@@ -2,11 +2,8 @@
 # env/Scripts/activate
 # pip install aiogram
 # pip install python-dotenv 
-# pip install jupyterlab
-# pip install langchain pandas tiktoken huggingface_hub
-# pip install -U langchain-community
-# pip install langchain faiss-cpu
-# pip install aiogram pandas langchain faiss-cpu
 # pip install langchain_ollama
-# ollama pull mxbai-embed-large
-# ollama list
+# pip install aiogram pandas langchain faiss-cpu
+# pip install -U langchain-community
+
+#Для корректной работы необходима версия Python 3.9, aiogram 3.13
