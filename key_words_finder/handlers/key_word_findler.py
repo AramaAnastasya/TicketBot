@@ -84,7 +84,7 @@ class VectorStore():
 
 
     def add(self, docs: pd.DataFrame):
-        loader = DataFrameLoader(docs, page_content_column='question')  # Индексация по ответам
+        loader = DataFrameLoader(docs, page_content_column='answer')  # Индексация по ответам
         documents = loader.load()
         
         # Делим документ
