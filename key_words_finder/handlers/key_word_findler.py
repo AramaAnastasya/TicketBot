@@ -28,6 +28,8 @@ pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tessera
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 
+from config import bot  # Импортируйте bot отсюда
+
 
 
 TOKEN = os.getenv('TOKEN')
@@ -35,18 +37,16 @@ bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
 knowledge_base_router = Router()
 
-
-# пример документов
 documents1 = [
-  {"id": 1,
+    {"id": 1,
         "question": "Как восстановить пароль?",
         "answer": "Для восстановления пароля перейдите по ссылке 'Забыли пароль?' на странице входа. Введите свой адрес электронной почты, и мы вышлем вам инструкции по восстановлению пароля. Если вы не получили письмо с инструкциями, проверьте папку со спамом или повторите запрос через несколько минут. Если у вас по-прежнему возникают проблемы, свяжитесь со службой поддержки по адресу support@company.com.",
         "url": "https://example.com/confluence/recover-password"}, 
-  {"id": 2,
+    {"id": 2,
         "question": "Как настроить двухфакторную аутентификацию?",
         "answer": "Для настройки двухфакторной аутентификации перейдите в раздел 'Настройки безопасности' вашего аккаунта и следуйте инструкциям. Выберите метод двухфакторной аутентификации, который вам удобен, например, SMS или приложение для аутентификации. Введите код подтверждения, который вы получите на ваш телефон или в приложении. После успешной настройки двухфакторной аутентификации вам будет необходимо вводить код подтверждения каждый раз при входе в систему. Это значительно повышает безопасность вашего аккаунта.",
         "url": "https://example.com/confluence/2fa-setup"},
-  {"id": 3,
+    {"id": 3,
         "question": "Как связаться с поддержкой?",
         "answer": "Контактные данные службы поддержки:\nТелефон: +7 (495) 123-45-67\nЭлектронная почта: support@company.com\nФорма обратной связи на сайте: https://company.com/support\n\nВремя работы службы поддержки:\nНаша служба поддержки работает круглосуточно, без выходных. Вы можете обратиться к нам в любое удобное для вас время.\n\nКак оставить заявку на техническую помощь:\nЧтобы оставить заявку на техническую помощь, выполните следующие действия:\n1. Перейдите на страницу технической поддержки на нашем сайте: https://company.com/support.\n2. Заполните форму заявки, указав необходимую информацию:\n   - Ваше имя и контактные данные.\n   - Описание проблемы.\n   - Желаемое время для связи.\n3. Нажмите кнопку 'Отправить'.\nМы постараемся решить вашу проблему как можно быстрее.",
         "url": "https://company.com/support"},
@@ -84,7 +84,7 @@ class VectorStore():
 
 
     def add(self, docs: pd.DataFrame):
-        loader = DataFrameLoader(docs, page_content_column='question')  # Индексация по вопросам
+        loader = DataFrameLoader(docs, page_content_column='question')  # Индексация по ответам
         documents = loader.load()
         
         # Делим документ
@@ -115,6 +115,11 @@ db = VectorStore(embedding_model=model.get_embeding_model())
 db.add(df)
 
 
+@knowledge_base_router.message(F.text.lower() == "ответ по базе знаний")
+async def menu_cmd(message: types.Message, state:FSMAdmin):
+    await message.answer("Задайте мне вопрос, и я найду релевантные документы.", reply_markup=reply.start_kb)
+    await state.set_state(FSMAdmin.input)
+
 @knowledge_base_router.message(FSMAdmin.input)
 async def process_message(message: types.Message, state: FSMContext):
     if message.content_type == 'photo':
@@ -143,19 +148,43 @@ async def process_message(message: types.Message, state: FSMContext):
         query = text
         await message.reply(query)
     else:
-        # Если это текстовое сообщение
         query = message.text
 
-    # Далее ваш существующий код для поиска по базе данных
+    # Поиск релевантного документа
+    print(f"\n=== Новый запрос ===")
+    print(f"Вопрос пользователя: {query}")
     results = db.store.similarity_search_with_score(query, k=1)
+    print(f"Результаты поиска: {results}")
     if results:
         best_match = results[0]
         document_id = best_match[0].metadata['id']
-        answer = next((doc['answer'] for doc in documents1 if doc['id'] == document_id), None)
-        if answer is not None:
-            await message.answer(answer)
+        similarity_score = best_match[1]
+        print(f"Найден документ ID: {document_id}")
+        print(f"Оценка схожести: {similarity_score}")
+            
+        full_answer = next((doc['answer'] for doc in documents1 if doc['id'] == document_id), None)
+        
+        if full_answer is not None:
+            # Формируем промпт для Ollama
+            prompt = f"""Система: Ты - русскоязычный ассистент. Отвечай кратко, только на основе контекста.
+
+Контекст: {full_answer}
+
+Вопрос: {query}
+
+Инструкции:
+1. Используй ТОЛЬКО информацию из контекста
+2. Ответ должен быть 1-2 предложения
+3. Никаких приветствий и формальностей
+4. Если в контексте нет ответа, скажи "Извините, в контексте нет ответа на этот вопрос
+5. Отвечай ТОЛЬКО на вопрос пользователя
+"""
+            
+            # Получаем ответ от Ollama
+            response = await model.generate(prompt, images=[])  # Используем существующий метод generate
+            print(f"Ответ модели: {response}")
+            await message.answer(response)
         else:
             await message.answer("Извините, я не смог найти ответ на ваш вопрос.")
     else:
         await message.answer("Извините, я не смог найти ответ на ваш вопрос.")
-

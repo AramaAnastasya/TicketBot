@@ -7,6 +7,7 @@ from dotenv import load_dotenv, find_dotenv
 
 from key_words_finder.handlers.key_word_findler import knowledge_base_router
 from handlers.basic_handlers import router
+from config import bot
 
 load_dotenv(find_dotenv())
 

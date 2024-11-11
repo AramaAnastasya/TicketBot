@@ -1,7 +1,8 @@
-from typing import List, Dict
-from langchain_ollama import OllamaEmbeddings
+from typing import List, Dict, Union
+from langchain_community.embeddings import OllamaEmbeddings
 import requests
 import json
+import aiohttp
 
 
 class LLM():
@@ -10,25 +11,31 @@ class LLM():
     # todo добавить бд и индексацию (возможно)
     # Добавлять изображения можно добавив в json поле "images": List[Base64]
     
-    def __init__(self, host: str, port: int or str, model: str, stream: bool=False) -> None:
+    def __init__(self, host: str, port: Union[int, str], model: str, stream: bool=False) -> None:
         self.model = model
         self.host = host
         self.port = port
         self.stream = stream
     
-    def generate(self, promt: str, images: List[str], **params):
+    async def generate(self, promt: str, images: List[str], **params):
         """ Ответ одним сообщением (ответ) """
         json_data={"model": self.model, "prompt": promt, "stream": self.stream, "images": images, **params}
-        data = self.send(json_data, path="generate")
-        return json.loads(data.text)["response"]
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"http://{self.host}:{self.port}/api/generate", json=json_data) as response:
+                data = await response.json()
+                return data["response"]
     
-    def chat(self, messages: List[Dict], images: List[str], **params):
+    async def chat(self, messages: List[Dict], images: List[str], **params):
         """ Ответ на основе множества сообщений (чат) 
         - messages: пример сообщения [{"role": "user", "content": "question"}]
         """
         json_data={"model": self.model, "messages": messages, "stream": self.stream, "images": images, **params}
-        data = self.send(json_data, path="chat")
-        return json.loads(data.text)["message"]["content"]
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"http://{self.host}:{self.port}/api/chat", json=json_data) as response:
+                data = await response.json()
+                return data["message"]["content"]
     
     def get_embeding_model(self, model: str="mxbai-embed-large"):
         """ Ембеддинги текстов """
@@ -37,3 +44,5 @@ class LLM():
     def send(self, json, path):
         """ Метод отправки данных в модель """
         return requests.post(f"http://{self.host}:{self.port}/api/{path}", json=json)
+
+    
