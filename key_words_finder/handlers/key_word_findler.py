@@ -86,8 +86,8 @@ class VectorStore():
     def add(self, docs: pd.DataFrame):
         # Загрузка данных, включая как вопрос, так и ответ
          # Создание нового столбца с объединенными данными
-        docs['combined'] = docs.apply(lambda row: f"Вопрос: {row['question']}\nОтвет: {row['answer']}", axis=1)
-        loader = DataFrameLoader(docs, page_content_column='combined') 
+        #docs['combined'] = docs.apply(lambda row: f"Вопрос: {row['question']}\nОтвет: {row['answer']}", axis=1)
+        loader = DataFrameLoader(docs, page_content_column='answer') 
 
         documents = loader.load()
         
@@ -112,7 +112,7 @@ class VectorStore():
 df = pd.DataFrame(all_documents)
 
 
-model = LLM(model="llama3.2:1b", host="127.0.0.1", port=11434)
+model = LLM(model="llama3.2:3b", host="127.0.0.1", port=11434)
 db = VectorStore(embedding_model=model.get_embeding_model())
 
 # Добавляем документы в хранилище
@@ -167,26 +167,28 @@ async def process_message(message: types.Message, state: FSMContext):
         print(f"Оценка схожести: {similarity_score}")
             
         full_answer = next((doc['answer'] for doc in documents1 if doc['id'] == document_id), None)
-        if full_answer is not None:
+        full_question = next((doc['question'] for doc in documents1 if doc['id'] == document_id), None)
+        if full_answer is not None and full_question is not None:
             # Формируем промпт для Ollama
             prompt = f"""Система: Ты - русскоязычный ассистент. Отвечай кратко, только на основе контекста.
 
-Контекст: {full_answer}
+Контекст: 
+Вопрос: {full_question}
+Ответ: {full_answer}
 
-Вопрос: {query}
+Вопрос пользователя: {query}
 
 Инструкции:
 1. Используй ТОЛЬКО информацию из контекста
-2. Ответ должен быть 1-2 предложения
-3. Отвечай на вопрос русском языке
-4. Не смешивай в слове буквы разных алфавитов
-5. Не пиши русские слова латиницей или другими алфавитами
-6. Никаких приветствий и формальностей
-7. Отвечай ТОЛЬКО на вопрос пользователя
+2. Отвечай на вопрос русском языке
+3. Не смешивай в слове буквы разных алфавитов
+4. Не пиши русские слова латиницей или другими алфавитами
+5. Никаких приветствий и формальностей
+6. Отвечай ТОЛЬКО на вопрос пользователя
 """
             
             # Получаем ответ от Ollama
-            response = await model.generate(prompt, images=[], temperature = 0.2, top_k=50, top_p=0.95)  # Используем существующий метод generate
+            response = await model.generate(prompt, images=[], temperature = 0.1, top_k=50, top_p=0.95)  # Используем существующий метод generate
             print(f"Ответ модели: {response}")
             await message.answer(response)
         else:
