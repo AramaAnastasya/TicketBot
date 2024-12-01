@@ -1,0 +1,26 @@
+VNC не будет работать, если не будет монитора, на который X сервер сможет выводить инфу.
+Может и можно это съэмулировать, но я не знаю как
+
+скрипт:
+/usr/bin/x11vnc_start.sh
+#!/bin/bash
+x11vnc -usepw -display :0 -q -forever &
+
+systemd:
+sudo nano /etc/systemd/system/vnc-autostart.service
+[Unit]
+Description=Autostart VNC Server
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/x11vnc_start.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
+
+Запуск:
+sudo systemctl enable vnc-autostart.service
+sudo systemctl start vnc-autostart.service

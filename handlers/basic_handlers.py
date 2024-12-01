@@ -7,6 +7,8 @@ from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
 from keyboards import reply, inline
 from key_words_finder.utils.states import FSMAdmin
+from key_words_finder.handlers.key_word_findler import load_documents_from_folder, update_knowledge_base
+
 TOKEN = os.getenv('TOKEN')
 
 if not TOKEN:
@@ -25,6 +27,12 @@ async def cmd_start(message: types.Message, state:FSMAdmin):
     await bot.send_message(message.chat.id, 
             f"Добрый день, <b>{chat_member.user.first_name}</b>! Я виртуальный помощник для ответов на ваши вопросы.\nВ чем заключается ваша проблема?")
     await state.set_state(FSMAdmin.input)
+
+    # Путь к папке с документами
+    folder_path = "documents"
+    new_documents = load_documents_from_folder(folder_path)
+    print(new_documents)
+    update_knowledge_base(new_documents)
 
 @router.message(F.text.lower() == "кнопки")
 async def cmd(message: types.Message):
