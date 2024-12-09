@@ -7,3 +7,4 @@ faiss-cpu
 langchain-community
 pytesseract
 Pillow
+PyPDF2

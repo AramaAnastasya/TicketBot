@@ -1,0 +1,28 @@
+Создаем какой то скриптик
+#!/bin/bash
+какие-то действия скрипта
+
+-------------------------------------------
+Открываем/создаем в systemd созданный файл для автостарта
+sudo nano /etc/systemd/system/script-name.service
+Прописываем:
+[Unit]
+Description=описание
+After=после какого сервиса запускается
+
+[Service]
+Type=simple тип запуска, simple, idle ...
+ExecStart=путь к скрипту
+Restart=делать ли рестарт и как
+
+[Install]
+WantedBy=multi-user.target
+
+-------------------------------------------
+Включаем его в автозагрузку
+sudo systemctl enable script-name.service
+sudo systemctl start script-name.service
+
+-------------------------------------------
+Делаем рестарт сервиса если нужно
+sudo systemctl restart script-name.service

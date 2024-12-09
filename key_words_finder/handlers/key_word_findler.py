@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import PyPDF2
 # Для ембеддинга и модели
 from key_words_finder.handlers.llm import LLM
 
@@ -110,8 +111,48 @@ class VectorStore():
         # Обновляем
         self.store.save_local(self.name)
 
+def load_documents_from_folder(folder_path):
+    documents = []
+    id_counter = len(documents1) + 1  # Начинаем счетчик с последнего ID в documents1
 
-# Далее ваш код
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        print(f"filename: {filename}")
+        print(f"file_path {file_path}")
+        if filename.endswith('.txt'):
+            with open(file_path, 'r', encoding='utf-8') as file:
+                content = file.read()
+                documents.append({
+                    "id": id_counter,
+                    "question": filename,
+                    "answer": content,
+                    "url": None,
+                    "image_irl": None
+                })
+                id_counter += 1
+        elif filename.endswith('.pdf'):
+            with open(file_path, 'rb') as file:
+                reader = PyPDF2.PdfReader(file)
+                content = ""
+                for page_num in range(len(reader.pages)):
+                    page = reader.pages[page_num]
+                    content += page.extract_text()
+                documents.append({
+                    "id": id_counter,
+                    "question": filename,
+                    "answer": content,
+                    "url": None,
+                    "image_irl": None
+                })
+                id_counter += 1
+
+    return documents
+
+def update_knowledge_base(new_documents):
+    global documents1
+    documents1.extend(new_documents)
+    df = pd.DataFrame(documents1)
+    db.add(df)
 
 
 df = pd.DataFrame(all_documents)
